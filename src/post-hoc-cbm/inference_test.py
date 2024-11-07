@@ -5,12 +5,13 @@ import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
+from torchvision.utils import save_image
 
 
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, get_projections
 
 def config():
     parser = argparse.ArgumentParser()
@@ -31,6 +32,7 @@ def config():
 def main(args, concept_bank, backbone, preprocess):
     input_image = '/home/cassano/scratch/pcbm/pcbm_datasets/CUB_200_2011/images/193.Bewick_Wren/Bewick_Wren_0052_184760.jpg'
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('Employed device:', device)
 
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
@@ -42,12 +44,27 @@ def main(args, concept_bank, backbone, preprocess):
     num_classes = len(classes)
     
     # Initialize the PCBM module.
-    posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+    posthoc_layer = torch.load(args.model_checkpoint, map_location=device)
     posthoc_layer = posthoc_layer.to(args.device)
-    checkpoint = torch.load(args.model_checkpoint, map_location=device)
-    print(checkpoint.keys())
-    posthoc_layer.load_state_dict(checkpoint['model_state_dict'])
-    model.eval()
+    posthoc_layer.eval()
+    concept_bank = pickle.load(open(args.concept_bank, 'rb'))
+    print(concept_bank)
+    print(concept_bank.keys())
+
+#     print(test_loader)
+#     for image, label in test_loader:
+#         correct_class = idx_to_class[label[0].item()]
+#         save_image(image[0], f'/scratch/pcbm_test_image_{idx_to_class[label[0].item()]}.png')
+#         break
+#         
+#         
+#     test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
+#     predictions, distributions = posthoc_layer(torch.from_numpy(test_embs).to(device), return_dist=True)
+# 
+#     print('First image prediction:', idx_to_class[torch.argmax(predictions[0]).item()])
+#     print('Correct class: ', correct_class)
+#     print('distributions:', distributions)
+    print('End.')
 
 
 if __name__ == "__main__":

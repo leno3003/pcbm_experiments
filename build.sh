@@ -4,4 +4,4 @@
 
 docker build -t eidos-service.di.unito.it/cassano/pcbm:1.0 . -f Dockerfile
 
-docker push eidos-service.di.unito.it/cassano/pcbm:1.0
+docker push eidos-service.di.unito.it/cassano/pcbm:1.0 --disable-content-trust

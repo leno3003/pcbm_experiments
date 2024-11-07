@@ -2,6 +2,9 @@ from sklearn.metrics import confusion_matrix
 import numpy as np
 from .embedding_tools import load_or_compute_projections
 
+# My addition
+from .embedding_tools import get_projections
+
 
 class AverageMeter(object):
     def __init__(self):
