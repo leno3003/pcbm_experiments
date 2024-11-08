@@ -37,7 +37,8 @@ class PosthocLinearCBM(nn.Module):
 
     def forward(self, emb, return_dist=False):
         x = self.compute_dist(emb)
-        out = self.classifier(x)
+        # out = self.classifier(x) # Original
+        out = self.classifier(x.double())
         if return_dist:
             return out, x
         return out

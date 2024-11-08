@@ -4,13 +4,13 @@ import os
 # CUB data is downloaded from the CBM release.
 # Dataset: https://worksheets.codalab.org/rest/bundles/0xd013a7ba2e88481bbc07e787f73109f5/ 
 # Metadata and splits: https://worksheets.codalab.org/bundles/0x5b9d528d2101418b87212db92fea6683
-CUB_DATA_DIR = "/scratch/pcbm/pcbm_datasets/CUB_200_2011"
-CUB_PROCESSED_DIR = "/scratch/pcbm/pcbm_datasets/class_attr_data_10"
+CUB_DATA_DIR = "/home/cassano/pcbm_data/pcbm_datasets/CUB_200_2011"
+CUB_PROCESSED_DIR = "/home/cassano/pcbm_data/pcbm_datasets/class_attr_data_10"
 
 
 # Derm data constants
 # Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
-DERM7_FOLDER = "/scratch/pcbm/pcbm_datasets/derm7pt/release_v0"
+DERM7_FOLDER = "/home/Cassano/pcbm_data/pcbm_datasets/derm7pt/release_v0"
 DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
 DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
 DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")

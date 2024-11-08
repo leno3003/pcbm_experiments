@@ -7,7 +7,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score
 from torchvision.utils import save_image
 
-
+import torchvision
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
@@ -30,7 +30,9 @@ def config():
     return parser.parse_args()
 
 def main(args, concept_bank, backbone, preprocess):
-    input_image = '/home/cassano/scratch/pcbm/pcbm_datasets/CUB_200_2011/images/193.Bewick_Wren/Bewick_Wren_0052_184760.jpg'
+    concepts_labels_file_path = '/home/cassano/pcbm_data/pcbm_datasets/CUB_200_2011/attributes/attributes.txt'
+    top_concept_number = 5
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Employed device:', device)
 
@@ -42,28 +44,47 @@ def main(args, concept_bank, backbone, preprocess):
     # See `learn_concepts_dataset.py` for details.
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     num_classes = len(classes)
-    
+
+    concepts = []
+    with open(concepts_labels_file_path, 'r') as file:
+        for line in file.readlines():
+            concepts.append(str(line.strip().split(' ')[1]))
+
     # Initialize the PCBM module.
     posthoc_layer = torch.load(args.model_checkpoint, map_location=device)
     posthoc_layer = posthoc_layer.to(args.device)
     posthoc_layer.eval()
-    concept_bank = pickle.load(open(args.concept_bank, 'rb'))
-    print(concept_bank)
-    print(concept_bank.keys())
 
-#     print(test_loader)
-#     for image, label in test_loader:
-#         correct_class = idx_to_class[label[0].item()]
-#         save_image(image[0], f'/scratch/pcbm_test_image_{idx_to_class[label[0].item()]}.png')
-#         break
-#         
-#         
-#     test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
-#     predictions, distributions = posthoc_layer(torch.from_numpy(test_embs).to(device), return_dist=True)
-# 
-#     print('First image prediction:', idx_to_class[torch.argmax(predictions[0]).item()])
-#     print('Correct class: ', correct_class)
-#     print('distributions:', distributions)
+    for batch, (image, label) in enumerate(test_loader):
+        correct_class = idx_to_class[label[0].item()]
+        save_image(torchvision.transforms.functional.adjust_brightness(image[0], 3), f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[0].item()]}.png')
+        break
+        
+        
+    test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
+    predictions, distributions = posthoc_layer(torch.from_numpy(test_embs).to(device), return_dist=True)
+
+    print('First image prediction:', idx_to_class[torch.argmax(predictions[0]).item()])
+    print(torch.argmax(predictions[0]).item())
+    print('Correct class: ', correct_class)
+    print(label[0].item())
+    distributions = distributions.cpu().detach().numpy()
+
+    index_max = np.argmax(np.array(distributions[0]))
+    print(f'Top {top_concept_number} concepts: ')
+
+    indices = np.argsort(distributions[0])[-top_concept_number:]
+    for i in indices:
+        print(concepts[i] + ': ' + str(distributions[0][i]))
+
+
+    correct = 0
+    for batch_index, (image_batch, label_batch) in enumerate(test_loader):
+        for i, label in enumerate(label_batch):
+            if label.item() == torch.argmax(predictions[batch_index]):
+                correct += 1
+    print('Test accuracy: ')
+    print(float(correct/len(test_loader)))
     print('End.')
 
 
@@ -71,6 +92,7 @@ if __name__ == "__main__":
     args = config()
     all_concepts = pickle.load(open(args.concept_bank, 'rb'))
     all_concept_names = list(all_concepts.keys())
+    print(all_concept_names)
     print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
     concept_bank = ConceptBank(all_concepts, args.device)
 
