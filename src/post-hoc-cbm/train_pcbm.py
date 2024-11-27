@@ -91,8 +91,13 @@ def main(args, concept_bank, backbone, preprocess):
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     # Sorry for the model path hack. Probably i'll change this later.
+    if '/' in args.backbone_name:
+        backbone_name = args.backbone_name.replace('/', '-')
+    else:
+        backbone_name = args.backbone_name
+
     model_path = os.path.join(args.out_dir,
-                              f"pcbm_{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
+                              f"pcbm_{args.dataset}__{backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
     torch.save(posthoc_layer, model_path)
 
     # Again, a sad hack.. Open to suggestions

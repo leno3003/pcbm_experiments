@@ -127,7 +127,11 @@ def learn_conceptbank(args, concept_list, scenario):
         concept_dict[concept] = (text_features, None, None, 0, {})
 
     print(f"# concepts: {len(concept_dict)}")
-    concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+    if '/' not in args.backbone_name:
+        concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+    else:
+        backbone_name = args.backbone_name.replace("/", "-")
+        concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to : {concept_dict_path}")
 

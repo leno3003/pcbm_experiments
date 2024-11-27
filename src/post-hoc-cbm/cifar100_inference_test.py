@@ -30,8 +30,12 @@ def config():
     return parser.parse_args()
 
 def main(args, concept_bank, backbone, preprocess):
-    concepts_labels_file_path = '/home/cassano/pcbm_data/pcbm_datasets/CUB_200_2011/attributes/attributes.txt'
-    top_concept_number = 5
+    all_concepts = pickle.load(open(args.concept_bank, 'rb'))
+    all_concept_names = list(all_concepts.keys())
+
+    test_index = 15
+
+    top_concept_number = 10
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Employed device:', device)
@@ -45,45 +49,45 @@ def main(args, concept_bank, backbone, preprocess):
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     num_classes = len(classes)
 
-    concepts = []
-    with open(concepts_labels_file_path, 'r') as file:
-        for line in file.readlines():
-            concepts.append(str(line.strip().split(' ')[1]))
-
     # Initialize the PCBM module.
     posthoc_layer = torch.load(args.model_checkpoint, map_location=device)
     posthoc_layer = posthoc_layer.to(args.device)
     posthoc_layer.eval()
 
-    for batch, (image, label) in enumerate(test_loader):
-        correct_class = idx_to_class[label[0].item()]
-        save_image(torchvision.transforms.functional.adjust_brightness(image[0], 3), f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[0].item()]}.png')
-        break
-        
-        
     test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
     predictions, distributions = posthoc_layer(torch.from_numpy(test_embs).to(device), return_dist=True)
+    print(predictions.shape)
+    
+    print(len(test_loader))
+    for batch, (image, label) in enumerate(test_loader):
+        correct_class = idx_to_class[label[test_index].item()]
+        # save_image(torchvision.transforms.functional.adjust_brightness(image[0], 3), f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[test_index].item()]}.png')
+        save_image(image[test_index], f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[test_index].item()]}.png')
+        break
 
-    print('First image prediction:', idx_to_class[torch.argmax(predictions[0]).item()])
-    print(torch.argmax(predictions[0]).item())
+    print(predictions[test_index].shape)
+    print('First image prediction:', idx_to_class[torch.argmax(predictions[test_index]).item()])
+    print(torch.argmax(predictions[test_index]).item())
     print('Correct class: ', correct_class)
-    print(label[0].item())
+    print(label[test_index].item())
     distributions = distributions.cpu().detach().numpy()
 
-    index_max = np.argmax(np.array(distributions[0]))
+    index_max = np.argmax(np.array(distributions[test_index]))
     print(f'Top {top_concept_number} concepts: ')
 
-    indices = np.argsort(distributions[0])[-top_concept_number:]
+    indices = np.argsort(distributions[test_index])[-top_concept_number:]
     for i in indices:
-        print(concepts[i] + ': ' + str(distributions[0][i]))
+        print(all_concept_names[i] + ': ' + str(distributions[test_index][i]))
 
 
-    print(predictions.shape)
+    # print(test_loader.shape)
     # exit()
+
 
     correct = 0
     total = 0
     for batch_index, (image_batch, label_batch) in enumerate(test_loader):
+        print(image_batch.shape)
         for i, label in enumerate(label_batch):
             if torch.argmax(predictions[i + batch_index*64]).item() == label.item():
                 correct += 1

@@ -33,9 +33,9 @@ def main(args, concept_bank, backbone, preprocess):
     all_concepts = pickle.load(open(args.concept_bank, 'rb'))
     all_concept_names = list(all_concepts.keys())
 
-    test_index = 50
+    test_index = 1
 
-    top_concept_number = 5
+    top_concept_number = 10
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Employed device:', device)
@@ -61,7 +61,7 @@ def main(args, concept_bank, backbone, preprocess):
     print(len(test_loader))
     for batch, (image, label) in enumerate(test_loader):
         correct_class = idx_to_class[label[test_index].item()]
-        # save_image(torchvision.transforms.functional.adjust_brightness(image[0], 3), f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[0].item()]}.png')
+        # save_image(torchvision.transforms.functional.adjust_brightness(image[0], 3), f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[test_index].item()]}.png')
         save_image(image[test_index], f'/home/cassano/pcbm_data/pcbm_test_image_{idx_to_class[label[test_index].item()]}.png')
         break
 
@@ -78,6 +78,8 @@ def main(args, concept_bank, backbone, preprocess):
     for i in indices:
         print(all_concept_names[i] + ': ' + str(distributions[test_index][i]))
 
+    print(predictions.shape)
+    # exit()
 
     correct = 0
     total = 0
@@ -87,7 +89,7 @@ def main(args, concept_bank, backbone, preprocess):
                 correct += 1
             total = total + 1
     print('Test accuracy: ')
-    print(float(correct/total))
+    print(float(correct)/float(total)*100)
     print('End.')
 
 
